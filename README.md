@@ -169,6 +169,8 @@ The application images use explicitly versioned Debian Bookworm bases: `python:3
 
 The frontend is available at `http://localhost:5173`, and the backend API documentation is available at `http://localhost:8000/docs`.
 
+Container health checks run every 10 seconds. The backend is marked healthy only when `GET /api/health` succeeds, and the frontend starts after that condition is met. Nginx also exposes `GET /healthz` for external load balancers or uptime monitors.
+
 ## Configuring model providers
 
 For local inference, install Ollama and pull one of the models listed above. Select the `All Groups · Administrator` user, open **Model settings**, register the Ollama model using its exact installed tag, then select that registered model for each applicable task.
