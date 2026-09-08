@@ -25,6 +25,17 @@ def test_demo_access_boundaries_end_to_end(monkeypatch):
     monkeypatch.setattr(ModelGateway, "list_models", fake_model_list)
     monkeypatch.setattr(ModelGateway, "stream", fake_stream)
     with TestClient(app) as client:
+        preflight = client.options(
+            "/api/users",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "GET",
+                "Access-Control-Request-Headers": "x-demo-user",
+            },
+        )
+        assert preflight.status_code == 200
+        assert preflight.headers["access-control-allow-origin"] == "http://localhost:5173"
+
         hidden = client.post(
             "/api/chat",
             headers={"X-Demo-User": "sales-jkt-1"},

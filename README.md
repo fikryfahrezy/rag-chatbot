@@ -169,6 +169,8 @@ The application images use explicitly versioned Debian Bookworm bases: `python:3
 
 The frontend is available at `http://localhost:5173`, and the backend API documentation is available at `http://localhost:8000/docs`.
 
+For a split-domain deployment, set `CORS_ORIGINS` to a comma-separated allowlist of frontend origins, without paths or trailing slashes. For example: `CORS_ORIGINS=http://localhost:5173,https://chat.example.com`. Do not use the backend API domain in this list.
+
 Container health checks run every 10 seconds. The backend is marked healthy only when `GET /api/health` succeeds, and the frontend starts after that condition is met. Nginx also exposes `GET /healthz` for external load balancers or uptime monitors.
 
 ## Configuring model providers
