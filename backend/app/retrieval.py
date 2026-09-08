@@ -39,8 +39,8 @@ def _score(query: str, content: str) -> float:
     return sum(min(count, doc_terms[term]) for term, count in query_terms.items())
 
 
-def retrieve(session: Session, query: str, user: User, public_only: bool, limit: int = 5) -> list[tuple[DocumentChunk, Document]]:
-    allowed_docs = scope_documents(select(Document.id), user, public_only)
+def retrieve(session: Session, query: str, user: User, limit: int = 5) -> list[tuple[DocumentChunk, Document]]:
+    allowed_docs = scope_documents(select(Document.id), user)
     rows = session.execute(
         select(DocumentChunk, Document)
         .join(Document, Document.id == DocumentChunk.document_id)
@@ -48,4 +48,3 @@ def retrieve(session: Session, query: str, user: User, public_only: bool, limit:
     ).all()
     ranked = sorted(rows, key=lambda row: _score(query, row[0].content), reverse=True)
     return [row for row in ranked if _score(query, row[0].content) > 0][:limit]
-

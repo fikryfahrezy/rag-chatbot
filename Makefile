@@ -1,7 +1,7 @@
 .PHONY: install dev backend frontend test
 
 install:
-	cd backend && uv sync --python 3.13.15 --frozen
+	cd backend && uv sync --python 3.13.15 --frozen --extra dev
 	cd frontend && npm ci
 
 dev:

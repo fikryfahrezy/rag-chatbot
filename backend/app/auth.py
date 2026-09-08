@@ -4,14 +4,19 @@ from .schemas import User
 
 
 # PoC identities. Replace X-Demo-User with verified JWT/OIDC claims in production.
+DEMO_REGIONS = ("jakarta", "surabaya")
+
+
 DEMO_USERS = {
-    "public": User(id="public", name="Public visitor", role="public"),
-    "sales-jkt-1": User(id="sales-jkt-1", name="Ayu (Sales Jakarta)", role="sales", region="jakarta"),
-    "sales-jkt-2": User(id="sales-jkt-2", name="Bima (Sales Jakarta)", role="sales", region="jakarta"),
-    "sales-sby-1": User(id="sales-sby-1", name="Citra (Sales Surabaya)", role="sales", region="surabaya"),
-    "manager-jkt": User(id="manager-jkt", name="Doni (Manager Jakarta)", role="manager", region="jakarta"),
-    "manager-sby": User(id="manager-sby", name="Eka (Manager Surabaya)", role="manager", region="surabaya"),
-    "admin": User(id="admin", name="Admin", role="admin"),
+    "sales-jkt-1": User(id="sales-jkt-1", name="Sales 1 — Jakarta", group="A", role="sales", region="jakarta"),
+    "sales-jkt-2": User(id="sales-jkt-2", name="Sales 2 — Jakarta", group="A", role="sales", region="jakarta"),
+    "sales-sby-1": User(id="sales-sby-1", name="Sales 1 — Surabaya", group="A", role="sales", region="surabaya"),
+    "manager-jkt": User(id="manager-jkt", name="Sales Manager — Jakarta", group="A", role="manager", region="jakarta"),
+    "manager-sby": User(id="manager-sby", name="Sales Manager — Surabaya", group="A", role="manager", region="surabaya"),
+    "public": User(id="public", name="Public visitor", group="B", role="public"),
+    "employee-jkt": User(id="employee-jkt", name="Employee — Jakarta", group="C", role="employee", region="jakarta"),
+    "employee-sby": User(id="employee-sby", name="Employee — Surabaya", group="C", role="employee", region="surabaya"),
+    "admin": User(id="admin", name="Administrator", group="ALL", role="admin"),
 }
 
 
@@ -20,4 +25,3 @@ def current_user(x_demo_user: str = Header(default="public")) -> User:
     if not user:
         raise HTTPException(status_code=401, detail="Unknown demo identity")
     return user
-

@@ -10,6 +10,12 @@ def require_internal(user: User) -> None:
         raise HTTPException(status_code=403, detail="Internal workspace requires authentication")
 
 
+def require_knowledge_access(user: User) -> None:
+    require_internal(user)
+    if user.role != "admin" and user.group != "C":
+        raise HTTPException(status_code=403, detail="Only Group C can access knowledge-base documents")
+
+
 def scope_orders(stmt: Select, user: User) -> Select:
     require_internal(user)
     if user.role == "sales":
@@ -28,14 +34,11 @@ def scope_commissions(stmt: Select, user: User) -> Select:
     return stmt
 
 
-def scope_documents(stmt: Select, user: User, public_only: bool = False) -> Select:
-    if public_only or user.role == "public":
-        return stmt.where(Document.visibility == "public")
-    if user.role in {"sales", "manager"}:
+def scope_documents(stmt: Select, user: User) -> Select:
+    require_knowledge_access(user)
+    if user.role in {"sales", "manager", "employee"}:
         return stmt.where(
-            (Document.visibility == "public")
-            | (Document.visibility == "internal")
+            (Document.visibility == "internal")
             | ((Document.visibility == "region") & (Document.region == user.region))
         )
     return stmt
-

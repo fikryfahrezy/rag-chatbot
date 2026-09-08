@@ -1,15 +1,12 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .models import Commission, Inventory, ModelSetting, Order
+from .models import Commission, Inventory, ModelSetting, Order, RegisteredModel
 
 
 def seed(session: Session) -> None:
-    if session.scalar(select(func.count(Order.id))):
-        return
-
-    session.add_all(
-        [
+    if not session.scalar(select(func.count(Order.id))):
+        session.add_all([
             Order(order_no="ORD-1001", customer="PT Maju", product="Router Pro", status="diproses", amount=12_500_000, sales_id="sales-jkt-1", region="jakarta"),
             Order(order_no="ORD-1002", customer="CV Terang", product="Switch 24P", status="dikirim", amount=8_750_000, sales_id="sales-jkt-2", region="jakarta"),
             Order(order_no="ORD-2001", customer="PT Timur", product="Access Point", status="selesai", amount=15_000_000, sales_id="sales-sby-1", region="surabaya"),
@@ -19,10 +16,34 @@ def seed(session: Session) -> None:
             Inventory(sku="RTR-PRO", product="Router Pro", stock=18, warehouse_region="jakarta"),
             Inventory(sku="SWT-24", product="Switch 24P", stock=7, warehouse_region="jakarta"),
             Inventory(sku="AP-01", product="Access Point", stock=31, warehouse_region="surabaya"),
-            ModelSetting(task="database_planner", provider="demo", model="deterministic-router"),
-            ModelSetting(task="database_answer", provider="demo", model="template-id"),
-            ModelSetting(task="pdf_answer", provider="demo", model="extractive-id"),
-        ]
-    )
-    session.commit()
+        ])
 
+    default_provider = "ollama"
+    default_model = "qwen3.5:4b-q4_K_M"
+    registered = session.scalar(select(RegisteredModel).where(
+        RegisteredModel.provider == default_provider, RegisteredModel.model == default_model,
+    ))
+    if not registered:
+        session.add(RegisteredModel(name="Qwen 3.5 4B local", provider=default_provider, model=default_model))
+    for task in ("database_planner", "database_answer", "pdf_answer"):
+        setting = session.get(ModelSetting, task)
+        if not setting:
+            session.add(ModelSetting(task=task, provider=default_provider, model=default_model))
+        elif setting.provider == "demo":
+            setting.provider = default_provider
+            setting.model = default_model
+            session.add(setting)
+    session.flush()
+    for setting in session.scalars(select(ModelSetting)).all():
+        registered = session.scalar(select(RegisteredModel).where(
+            RegisteredModel.provider == setting.provider, RegisteredModel.model == setting.model,
+        ))
+        if not registered:
+            session.add(RegisteredModel(
+                name=f"{setting.provider} · {setting.model}",
+                provider=setting.provider,
+                model=setting.model,
+            ))
+    for legacy in session.scalars(select(RegisteredModel).where(RegisteredModel.provider == "demo")).all():
+        session.delete(legacy)
+    session.commit()

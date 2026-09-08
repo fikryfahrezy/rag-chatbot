@@ -20,7 +20,7 @@ def test_sales_cannot_read_another_sales_order():
             Order(order_no="ORD-2", customer="Other", product="B", status="secret", amount=2, sales_id="bob", region="west"),
         ])
         db.commit()
-        alice = User(id="alice", name="Alice", role="sales", region="west")
+        alice = User(id="alice", name="Alice", group="A", role="sales", region="west")
         result = answer_operation(db, "status ORD-2", alice)
         assert "tidak ditemukan" in result.answer
         assert "secret" not in result.answer
@@ -33,8 +33,7 @@ def test_manager_only_sees_own_region_commission():
             Commission(sales_id="bob", region="east", period="2026-09", amount=900),
         ])
         db.commit()
-        manager = User(id="m-west", name="Manager", role="manager", region="west")
+        manager = User(id="m-west", name="Manager", group="A", role="manager", region="west")
         result = answer_operation(db, "berapa komisi?", manager)
         assert "100" in result.answer
         assert "900" not in result.answer
-
