@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from .models import Commission, Inventory, Order
-from .policies import scope_commissions, scope_orders
+from .policies import scope_commissions, scope_inventory, scope_orders
 from .schemas import Citation, User
 
 
@@ -21,9 +21,7 @@ def answer_operation(session: Session, question: str, user: User, route_hint: st
     order_match = re.search(r"ord-\d+", text, re.IGNORECASE)
 
     if route_hint == "inventory" or "stok" in text or "stock" in text:
-        stmt = select(Inventory)
-        if user.role in {"sales", "manager"}:
-            stmt = stmt.where(Inventory.warehouse_region == user.region)
+        stmt = scope_inventory(select(Inventory), user)
         rows = session.scalars(stmt.order_by(Inventory.product).limit(20)).all()
         answer = "Stok saat ini: " + "; ".join(f"{r.product} ({r.sku}) = {r.stock}" for r in rows)
         citations = [Citation(label=r.sku, detail=f"inventory row #{r.id}") for r in rows]

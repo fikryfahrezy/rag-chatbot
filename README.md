@@ -152,7 +152,7 @@ Start the frontend in a second terminal:
 make frontend
 ```
 
-Open `http://localhost:5173` and select a user in the upper-right corner. Its group and authorization scope are applied automatically:
+Open `http://localhost:5173/initial` and select a user in the upper-right corner. Its group and authorization scope are applied automatically:
 
 - In Group A as `Sales 1 — Jakarta`, asking `Status order ORD-1002?` must return “not found.”
 - In Group A as `Sales Manager — Jakarta`, asking `Berapa komisi bulan ini?` must include only Jakarta.
@@ -167,7 +167,9 @@ docker compose up --build
 
 The application images use explicitly versioned Debian Bookworm bases: `python:3.13.15-slim-bookworm`, `node:22.23.2-bookworm-slim`, and the stable `nginx:1.28.0-bookworm` image. No Alpine base image is used.
 
-The frontend is available at `http://localhost:5173`, and the backend API documentation is available at `http://localhost:8000/docs`.
+The frontend is available at `http://localhost:5173/initial`, and the backend API documentation is available at `http://localhost:8000/docs`.
+
+An alternative minimal frontend is also available through three focused routes: `http://localhost:5173/database` for operational and public database chat, `http://localhost:5173/pdf` for document upload and document chat, and `http://localhost:5173/admin` for model administration.
 
 For a split-domain deployment, set `CORS_ORIGINS` to a comma-separated allowlist of frontend origins, without paths or trailing slashes. For example: `CORS_ORIGINS=http://localhost:5173,https://chat.example.com`. Do not use the backend API domain in this list.
 

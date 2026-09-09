@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import {
   api, type Group, type ModelSettings, type Provider, type RegisteredModel, type User, type Workspace,
-} from './api'
+} from '../src/api'
 
 interface Message {
   role: 'user' | 'assistant'

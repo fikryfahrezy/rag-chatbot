@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy import Select
 
-from .models import Commission, Document, Order
+from .models import Commission, Document, Inventory, Order
 from .schemas import User
 
 
@@ -31,6 +31,13 @@ def scope_commissions(stmt: Select, user: User) -> Select:
         return stmt.where(Commission.sales_id == user.id)
     if user.role == "manager":
         return stmt.where(Commission.region == user.region)
+    return stmt
+
+
+def scope_inventory(stmt: Select, user: User) -> Select:
+    require_internal(user)
+    if user.role in {"sales", "manager"}:
+        return stmt.where(Inventory.warehouse_region == user.region)
     return stmt
 
 

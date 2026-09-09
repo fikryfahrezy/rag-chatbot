@@ -16,8 +16,11 @@ from .auth import DEMO_REGIONS, DEMO_USERS, current_user
 from .chat import answer_chat, prepare_chat, stream_prepared_chat
 from .config import get_settings
 from .database import Base, SessionLocal, engine, get_db
-from .models import Document, DocumentChunk, ModelSetting, RegisteredModel
-from .policies import require_internal, require_knowledge_access, scope_documents
+from .models import Commission, Document, DocumentChunk, Inventory, ModelSetting, Order, RegisteredModel
+from .policies import (
+    require_internal, require_knowledge_access, scope_commissions, scope_documents,
+    scope_inventory, scope_orders,
+)
 from .providers import ModelGateway
 from .retrieval import ingest_pdf
 from .schemas import (
@@ -54,6 +57,54 @@ def health() -> dict[str, str]:
 @app.get("/api/users", response_model=list[User])
 def users() -> list[User]:
     return list(DEMO_USERS.values())
+
+
+@app.get("/api/database-source")
+def database_source(user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
+    if user.role != "admin" and user.group not in {"A", "B"}:
+        raise HTTPException(status_code=403, detail="This identity cannot access database sources")
+
+    inventory = db.scalars(select(Inventory).order_by(Inventory.id)).all()
+    if user.role == "public":
+        return {"tables": [{
+            "name": "public_catalog",
+            "columns": ["product", "availability"],
+            "rows": [{
+                "product": row.product,
+                "availability": "available" if row.stock > 0 else "unavailable",
+            } for row in inventory],
+        }]}
+
+    orders = db.scalars(scope_orders(select(Order), user).order_by(Order.id)).all()
+    commissions = db.scalars(scope_commissions(select(Commission), user).order_by(Commission.id)).all()
+    inventory = db.scalars(scope_inventory(select(Inventory), user).order_by(Inventory.id)).all()
+    return {"tables": [
+        {
+            "name": "orders",
+            "columns": ["id", "order_no", "customer", "product", "status", "amount", "sales_id", "region", "created_at"],
+            "rows": [{
+                "id": row.id, "order_no": row.order_no, "customer": row.customer,
+                "product": row.product, "status": row.status, "amount": row.amount,
+                "sales_id": row.sales_id, "region": row.region, "created_at": row.created_at.isoformat(),
+            } for row in orders],
+        },
+        {
+            "name": "commissions",
+            "columns": ["id", "sales_id", "region", "period", "amount"],
+            "rows": [{
+                "id": row.id, "sales_id": row.sales_id, "region": row.region,
+                "period": row.period, "amount": row.amount,
+            } for row in commissions],
+        },
+        {
+            "name": "inventory",
+            "columns": ["id", "sku", "product", "stock", "warehouse_region"],
+            "rows": [{
+                "id": row.id, "sku": row.sku, "product": row.product,
+                "stock": row.stock, "warehouse_region": row.warehouse_region,
+            } for row in inventory],
+        },
+    ]}
 
 
 @app.post("/api/chat", response_model=ChatResponse)

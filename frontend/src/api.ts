@@ -30,6 +30,18 @@ export interface ModelChoice { provider: Provider; model: string }
 export type ModelSettings = Record<'database_planner' | 'database_answer' | 'pdf_answer', ModelChoice>
 export interface RegisteredModel { id: number; name: string; provider: Provider; model: string }
 export interface RegisteredModelCreate { name: string; provider: Provider; model: string }
+export interface DocumentRecord {
+  id: number
+  filename: string
+  visibility: 'internal' | 'region'
+  region?: string | null
+  chunks: number
+}
+export interface DatabaseTable {
+  name: string
+  columns: string[]
+  rows: Record<string, string | number | null>[]
+}
 
 const baseUrl = import.meta.env.VITE_API_URL || ''
 
@@ -94,11 +106,13 @@ export const api = {
   deleteRegisteredModel: (userId: string, modelId: number) => request<{ deleted: number }>(`/api/registered-models/${modelId}`, userId, {
     method: 'DELETE',
   }),
+  documents: (userId: string) => request<DocumentRecord[]>('/api/documents', userId),
+  databaseSource: (userId: string) => request<{ tables: DatabaseTable[] }>('/api/database-source', userId),
   uploadPdf: (userId: string, file: File, visibility: 'internal' | 'region', region: string) => {
     const data = new FormData()
     data.append('file', file)
     data.append('visibility', visibility)
     if (visibility === 'region') data.append('region', region)
-    return request<{ filename: string; chunks: number }>('/api/documents', userId, { method: 'POST', body: data })
+    return request<DocumentRecord>('/api/documents', userId, { method: 'POST', body: data })
   },
 }

@@ -44,6 +44,24 @@ def test_demo_access_boundaries_end_to_end(monkeypatch):
         assert hidden.status_code == 200
         assert "tidak ditemukan" in hidden.json()["answer"]
 
+        sales_source = client.get("/api/database-source", headers={"X-Demo-User": "sales-jkt-1"})
+        assert sales_source.status_code == 200
+        sales_tables = {table["name"]: table for table in sales_source.json()["tables"]}
+        assert all(row["sales_id"] == "sales-jkt-1" for row in sales_tables["orders"]["rows"])
+        assert all(row["sales_id"] == "sales-jkt-1" for row in sales_tables["commissions"]["rows"])
+        assert all(row["warehouse_region"] == "jakarta" for row in sales_tables["inventory"]["rows"])
+
+        public_source = client.get("/api/database-source", headers={"X-Demo-User": "public"})
+        assert public_source.status_code == 200
+        public_table = public_source.json()["tables"][0]
+        assert public_table["columns"] == ["product", "availability"]
+        assert all("stock" not in row for row in public_table["rows"])
+
+        document_user_source = client.get(
+            "/api/database-source", headers={"X-Demo-User": "employee-jkt"},
+        )
+        assert document_user_source.status_code == 403
+
         streamed = client.post(
             "/api/chat/stream",
             headers={"X-Demo-User": "sales-jkt-1"},
